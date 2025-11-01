@@ -30,6 +30,14 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
+      {/* Backdrop overlay for mobile menu */}
+      {isMenuOpen && (
+        <div 
+          className="navbar-backdrop" 
+          onClick={closeMenu}
+        ></div>
+      )}
+      
       <div className="container navbar-content">
         <Link to="/" className="navbar-brand">
           <span className="brand-icon">🔄</span>
@@ -37,7 +45,7 @@ const Navbar = () => {
         </Link>
 
         <button 
-          className="hamburger"
+          className={`hamburger ${isMenuOpen ? 'active' : ''}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
