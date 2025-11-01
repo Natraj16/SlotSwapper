@@ -1,0 +1,157 @@
+.dashboard-page {
+  min-height: calc(100vh - 80px);
+  padding: 40px 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 40px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.empty-state h2 {
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.events-grid {
+  margin-top: 24px;
+}
+
+.event-card {
+  border-left: 4px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.event-card.busy {
+  border-left-color: var(--text-light);
+}
+
+.event-card.swappable {
+  border-left-color: var(--secondary);
+  background: linear-gradient(135deg, rgba(0, 184, 148, 0.05), rgba(0, 184, 148, 0.02));
+}
+
+.event-card.swap_pending {
+  border-left-color: var(--warning);
+  background: linear-gradient(135deg, rgba(253, 203, 110, 0.05), rgba(253, 203, 110, 0.02));
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.event-header h3 {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+}
+
+.event-time {
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.event-time div {
+  margin-bottom: 8px;
+}
+
+.time-icon {
+  margin-right: 8px;
+}
+
+.event-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-content h2 {
+  margin-bottom: 24px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+
+  .event-actions {
+    flex-direction: column;
+  }
+
+  .event-actions .btn {
+    width: 100%;
+  }
+}

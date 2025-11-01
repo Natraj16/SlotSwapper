@@ -1,0 +1,114 @@
+.marketplace-page {
+  min-height: calc(100vh - 80px);
+  padding: 40px 0;
+}
+
+.marketplace-header {
+  margin-bottom: 32px;
+}
+
+.marketplace-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.slots-grid {
+  margin-top: 24px;
+}
+
+.slot-card {
+  border-left: 4px solid var(--secondary);
+  background: linear-gradient(135deg, rgba(0, 184, 148, 0.03), transparent);
+}
+
+.slot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.slot-header h3 {
+  font-size: 1.3rem;
+}
+
+.slot-owner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius);
+}
+
+.owner-icon {
+  font-size: 2rem;
+}
+
+.owner-email {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.slot-time {
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.slot-time div {
+  margin-bottom: 8px;
+}
+
+.time-icon {
+  margin-right: 8px;
+}
+
+/* Modal specific styles */
+.selected-slot-info {
+  margin-bottom: 24px;
+}
+
+.selected-slot-info h3 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+
+.info-box {
+  background: linear-gradient(135deg, var(--primary-light), var(--secondary));
+  color: white;
+  padding: 16px;
+  border-radius: var(--radius);
+}
+
+.info-box p {
+  margin-bottom: 4px;
+}
+
+.info-box strong {
+  font-size: 1.2rem;
+}
+
+.owner-name {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .marketplace-header h1 {
+    font-size: 2rem;
+  }
+  
+  .slot-owner {
+    flex-direction: column;
+    text-align: center;
+  }
+}
