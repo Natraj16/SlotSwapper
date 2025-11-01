@@ -1,442 +1,88 @@
 # 🔄 SlotSwapper - P2P Time Slot Scheduling
 
-A peer-to-peer scheduling application that enables users to swap calendar events with each other in real-time.
-
-![Tech Stack](https://img.shields.io/badge/MongoDB-Atlas-green) ![Node.js](https://img.shields.io/badge/Node.js-Express-blue) ![React](https://img.shields.io/badge/React-Vite-purple) ![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-orange)
-
----
-
-## 📋 Table of Contents
-
-- [Project Overview & Design Choices](#-project-overview--design-choices)
-- [Local Setup Instructions](#-local-setup-instructions)
-- [API Endpoints Documentation](#-api-endpoints-documentation)
-- [Assumptions & Challenges](#-assumptions--challenges)
+A peer-to-peer scheduling application enabling users to swap calendar events in real-time with JWT auth, WebSocket notifications, and multi-tenant group isolation.
 
 ---
 
 ## 🎯 Project Overview & Design Choices
 
-### What SlotSwapper Does
+**What It Does**: SlotSwapper is a marketplace where users exchange calendar time slots. User A marks "Team Meeting" (Tue 10-11 AM) as swappable, User B marks "Focus Block" (Wed 2-3 PM) as swappable. User A requests a swap, User B receives real-time notification and accepts—both calendars update automatically with swapped ownership.
 
-SlotSwapper is a marketplace-based calendar event exchange system where users can swap busy time slots with others in their group. For example, if **User A** has a "Team Meeting" on Tuesday 10-11 AM but prefers Wednesday's time, and **User B** has a "Focus Block" on Wednesday 2-3 PM, they can mark these as "swappable", discover each other's slots, and exchange them. When User B accepts the swap request (received via real-time notification), both calendars update automatically with swapped ownership.
+**Architecture**: Monorepo with separate backend/frontend. RESTful API with WebSocket layer for real-time push notifications. MongoDB stores users (bcrypt-hashed passwords, group memberships), events (with BUSY/SWAPPABLE/SWAP_PENDING status), swap requests, and groups (6-char crypto-secure invite codes). JWT provides stateless auth (30-day tokens). Group-based isolation prevents cross-tenant data leakage.
 
-**Core Features**: JWT authentication, event CRUD with tri-state status management (BUSY/SWAPPABLE/SWAP_PENDING), real-time WebSocket notifications, multi-tenant group isolation with unique invite codes, dark/light mode toggle, and responsive mobile-first UI.
-
-### Architecture & Technology Decisions
-
-**Monorepo Structure**: The project uses a monorepo with separate `backend/` and `frontend/` directories. This provides clear separation of concerns while keeping related code in one repository, simplifying deployment and version control.
-
-**Tech Stack Rationale**:
-- **Frontend (React 18 + Vite)**: Chosen for fast HMR during development, modern React features (hooks, context), and superior build performance over Create React App. Pure CSS was used instead of frameworks to avoid dependencies and maintain full styling control.
-- **Backend (Node.js + Express)**: Enables full JavaScript stack, reducing context switching. Express provides a minimal, unopinionated framework perfect for RESTful APIs. The large npm ecosystem accelerates development.
-- **Database (MongoDB Atlas)**: Document-oriented storage fits the flexible event schema naturally. Mongoose ODM provides type safety and schema validation while maintaining JavaScript idioms. Cloud hosting (Atlas) eliminates infrastructure management.
-- **Authentication (JWT)**: Stateless tokens enable horizontal scaling without session stores. 30-day expiration balances security with user convenience. Tokens stored in localStorage for persistence across sessions.
-- **Real-time (WebSocket)**: Bidirectional communication allows instant server-to-client notifications (swap requests, acceptances). Low latency compared to HTTP polling. Custom WebSocket server using `ws` library provides fine-grained control.
-
-**Database Schema Design**:
-- **Users Collection**: Stores bcrypt-hashed passwords (10 salt rounds), array of group memberships, and current active group reference. This enables multi-group support where users can belong to multiple communities but operate in one at a time.
-- **Events Collection**: Each document represents a calendar slot with `userId`, `groupId`, `title`, `startTime`, `endTime`, and critically, a `status` field (BUSY/SWAPPABLE/SWAP_PENDING) that drives the swap marketplace logic.
-- **SwapRequests Collection**: Links two events and their owners, tracking request state (PENDING/ACCEPTED/REJECTED). Enables swap history and audit trails.
-- **Groups Collection**: Stores group metadata and auto-generated 6-character invite codes using crypto-secure random generation, ensuring uniqueness for private group sharing.
-
-**Security Architecture**:
-- Passwords never stored in plaintext; bcrypt with 10 rounds balances security and performance
-- JWT middleware validates tokens on all protected routes, extracting user identity from claims
-- CORS configured with specific origin whitelist (`FRONTEND_URL`), not wildcard, preventing unauthorized domain access
-- Group-based isolation ensures queries filter by `currentGroup`, preventing cross-tenant data leakage
-- MongoDB connection uses TLS encryption (Atlas default), protecting data in transit
+**Tech Stack**: React 18 + Vite (fast HMR, modern hooks), Node.js + Express (full-stack JavaScript), MongoDB Atlas (flexible schema, cloud-hosted), WebSocket (low-latency bidirectional communication). Pure CSS for zero dependencies.
 
 ---
 
 ## 🚀 Local Setup Instructions
 
-### Prerequisites
-- **Node.js 16+** and npm installed ([download here](https://nodejs.org/))
-- **MongoDB Atlas** account (free tier works) - [Sign up here](https://www.mongodb.com/cloud/atlas/register)
-- **Git** for cloning the repository
+**Prerequisites**: Node.js 16+, MongoDB Atlas account ([signup](https://www.mongodb.com/cloud/atlas/register))
 
-### Step 1: Clone and Navigate
+**1. Clone Repository**
 ```bash
 git clone https://github.com/Natraj16/SlotSwapper.git
 cd SlotSwapper
 ```
 
-### Step 2: Backend Configuration and Startup
-
-Navigate to backend and install dependencies:
+**2. Backend Setup**
 ```bash
 cd backend
 npm install
 ```
-
-**Create `.env` file** in the `backend/` directory with the following variables:
+Create `backend/.env`:
 ```env
 PORT=3001
-MONGODB_URI=mongodb+srv://your-username:your-password@cluster.mongodb.net/slotswapper?retryWrites=true&w=majority
-JWT_SECRET=your-super-secret-key-minimum-32-characters-long
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/slotswapper?retryWrites=true&w=majority
+JWT_SECRET=your-secret-key-minimum-32-characters-long
 FRONTEND_URL=http://localhost:5173
 NODE_ENV=development
 ```
+Start: `npm run dev` → Runs on `http://localhost:3001`
 
-**Important Notes**:
-- Replace `MONGODB_URI` with your actual MongoDB Atlas connection string (get it from Atlas Dashboard → Connect → Connect your application)
-- Generate a strong `JWT_SECRET` (use `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
-- `FRONTEND_URL` must match where your frontend runs (default is 5173)
-
-Start the backend server:
+**3. Frontend Setup** (new terminal)
 ```bash
-npm run dev
-```
-
-**Expected Output**: Server should start on `http://localhost:3001` with a banner showing "SlotSwapper API Server" and "WebSocket enabled". If you see connection errors, verify your MongoDB URI is correct and Atlas Network Access allows your IP (set to 0.0.0.0/0 for testing).
-
-### Step 3: Frontend Configuration and Startup
-
-Open a **new terminal window/tab** and navigate to frontend:
-```bash
-cd frontend    # from SlotSwapper root directory
+cd frontend
 npm install
 ```
-
-**Create `.env` file** in the `frontend/` directory:
+Create `frontend/.env`:
 ```env
 VITE_API_URL=http://localhost:3001/api
 ```
+Start: `npm run dev` → Runs on `http://localhost:5173`
 
-This tells the React app where to find the backend API. The `/api` suffix is crucial as all backend routes are prefixed with it.
-
-Start the frontend development server:
-```bash
-npm run dev
-```
-
-**Expected Output**: Vite dev server should start on `http://localhost:5173` with hot module replacement enabled.
-
-### Step 4: Access and Test the Application
-
-Open your browser and navigate to: **`http://localhost:5173`**
-
-**Create a New Account**:
-1. Click "Sign Up" 
-2. Enter name, email, password
-3. Click "Register"
-
-You'll be automatically logged in and redirected to the Dashboard. From here you can:
-- Create groups (get a 6-character invite code)
-- Join existing groups (enter invite code)
-- Create events and mark them as swappable
-- Browse the marketplace to find swap opportunities
-- Send/receive swap requests with real-time notifications
-
-**Quick Test Flow**:
-1. Create a group → Note the invite code
-2. Create an event and mark status as "SWAPPABLE"
-3. Open an incognito window, register a second user
-4. Join the same group using the invite code
-5. Create and mark another event as swappable
-6. Request a swap → First user receives real-time notification
-7. Accept the swap → Both calendars update automatically
+**4. Test**: Open browser to `http://localhost:5173`, sign up, create a group (get invite code), create swappable events. Test with second user in incognito.
 
 ---
 
-## 📡 API Endpoints Documentation
+## 📡 API Endpoints
 
-All endpoints are prefixed with `/api`. Protected routes require a JWT token in the `Authorization` header as `Bearer <token>`.
+All routes prefixed `/api`. Protected routes require `Authorization: Bearer <token>` header.
 
-### Authentication Endpoints
+**Auth**: `POST /auth/register` (name, email, password → returns user + JWT), `POST /auth/login`, `GET /auth/me`
 
-**Register New User**
-```http
-POST /api/auth/register
-Content-Type: application/json
+**Events**: `GET /events` (user's events), `GET /events/swappable` (marketplace), `POST /events` (create with title, startTime, endTime, status), `PUT /events/:id`, `DELETE /events/:id`
 
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "securepassword123"
-}
-```
-**Response** (201 Created):
-```json
-{
-  "user": {
-    "_id": "6543210abcdef",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "groups": [],
-    "currentGroup": null
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTQzMjEwYWJjZGVmIiwiaWF0IjoxNjk..."
-}
-```
-The token expires in 30 days and should be stored client-side (localStorage) and sent with all subsequent requests.
+**Swaps**: `GET /swap-requests`, `POST /swap-requests` (userEventId, targetEventId → creates request, sets both to SWAP_PENDING, notifies target), `PUT /swap-requests/:id/accept` (swaps ownership atomically via MongoDB transaction), `PUT /swap-requests/:id/reject`
 
-**Login User**
-```http
-POST /api/auth/login
-Content-Type: application/json
+**Groups**: `POST /groups/create` (name → returns group with inviteCode), `POST /groups/join` (inviteCode), `POST /groups/switch` (groupId), `POST /groups/leave`, `GET /groups`
 
-{
-  "email": "john@example.com",
-  "password": "securepassword123"
-}
-```
-Returns same structure as register. Password is verified against bcrypt hash.
-
-**Get Current User** (Protected)
-```http
-GET /api/auth/me
-Authorization: Bearer <your-jwt-token>
-```
-Returns user object with populated groups and currentGroup. Used to restore session on page reload.
-
----
-
-### Event Management Endpoints
-
-**Get User's Events** (Protected)
-```http
-GET /api/events
-Authorization: Bearer <token>
-```
-Returns all events belonging to the authenticated user in their current group. Response includes event status (BUSY/SWAPPABLE/SWAP_PENDING).
-
-**Get Swappable Events in Marketplace** (Protected)
-```http
-GET /api/events/swappable
-Authorization: Bearer <token>
-```
-Returns events marked as SWAPPABLE by other users in the same group, excluding the requester's own events. This populates the marketplace view.
-
-**Create Event** (Protected)
-```http
-POST /api/events
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "title": "Team Meeting",
-  "description": "Weekly sync with engineering team",
-  "startTime": "2025-11-05T10:00:00Z",
-  "endTime": "2025-11-05T11:00:00Z",
-  "status": "SWAPPABLE"
-}
-```
-**Response** (201 Created): Returns created event object with auto-populated `userId` and `groupId` from JWT.
-
-**Update Event** (Protected)
-```http
-PUT /api/events/:eventId
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "status": "BUSY"
-}
-```
-Allows updating any event field. Users can only update their own events. Changing status from SWAPPABLE to BUSY removes it from marketplace.
-
-**Delete Event** (Protected)
-```http
-DELETE /api/events/:eventId
-Authorization: Bearer <token>
-```
-Permanently deletes the event. Also deletes any associated pending swap requests.
-
----
-
-### Swap Request Endpoints
-
-**Get Swap Requests** (Protected)
-```http
-GET /api/swap-requests
-Authorization: Bearer <token>
-```
-Returns swap requests where the user is either the requester or target. Populated with full event details for both sides of the swap.
-
-**Create Swap Request** (Protected)
-```http
-POST /api/swap-requests
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "userEventId": "6543210xyz",
-  "targetEventId": "6543210abc"
-}
-```
-Creates a swap proposal. `userEventId` is the requester's event, `targetEventId` is the desired event. Both events' status changes to SWAP_PENDING. Target user receives WebSocket notification.
-
-**Accept Swap** (Protected)
-```http
-PUT /api/swap-requests/:requestId/accept
-Authorization: Bearer <token>
-```
-Executes the swap: both events exchange `userId` fields (ownership transfer), status reverts to BUSY, and request marked ACCEPTED. Uses Mongoose transactions for atomicity.
-
-**Reject Swap** (Protected)
-```http
-PUT /api/swap-requests/:requestId/reject
-Authorization: Bearer <token>
-```
-Declines the swap. Both events revert to SWAPPABLE status, request marked REJECTED.
-
----
-
-### Group Management Endpoints
-
-**Create Group** (Protected)
-```http
-POST /api/groups/create
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "Engineering Team"
-}
-```
-**Response**:
-```json
-{
-  "group": {
-    "_id": "grp123",
-    "name": "Engineering Team",
-    "inviteCode": "A1B2C3",
-    "createdBy": "6543210abcdef",
-    "members": ["6543210abcdef"]
-  },
-  "updatedUser": { /* user object with updated groups array */ },
-  "message": "Group created successfully"
-}
-```
-Generates a unique 6-character invite code using crypto-secure randomness. Creator automatically becomes a member and it's set as their currentGroup.
-
-**Join Group** (Protected)
-```http
-POST /api/groups/join
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "inviteCode": "A1B2C3"
-}
-```
-Adds user to group's members array and their groups array. Sets as currentGroup. Returns error if already a member or code invalid.
-
-**Switch Current Group** (Protected)
-```http
-POST /api/groups/switch
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "groupId": "grp123"
-}
-```
-Changes user's active group context. User must already be a member. All subsequent API calls filter by this group.
-
-**Leave Group** (Protected)
-```http
-POST /api/groups/leave
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "groupId": "grp123"
-}
-```
-Removes user from group. If it was their currentGroup, automatically switches to another group they're in (or null). Cannot leave if it's the only group.
-
-**List User's Groups** (Protected)
-```http
-GET /api/groups
-Authorization: Bearer <token>
-```
-Returns array of all groups the user belongs to with full details.
-
----
-
-### WebSocket Real-time Communication
-
-**Connection**: `ws://localhost:3001` (development) or `wss://your-domain.com` (production)
-
-**Authentication Flow**:
-1. Client establishes WebSocket connection
-2. Client sends authentication message:
-```json
-{
-  "type": "authenticate",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
-```
-3. Server validates JWT and associates connection with userId
-
-**Server Push Events**:
-When a swap request is created/accepted/rejected, server pushes to relevant users:
-```json
-{
-  "type": "SWAP_REQUEST",
-  "data": {
-    "message": "John Doe wants to swap 'Team Meeting' with your 'Focus Block'",
-    "swapRequest": {
-      "_id": "swap123",
-      "status": "PENDING",
-      "requester": { /* user object */ },
-      "userEvent": { /* event object */ },
-      "targetEvent": { /* event object */ }
-    }
-  }
-}
-```
-
-Client listens for these events and updates UI in real-time (toast notifications, badge counts, list refreshes).
+**WebSocket**: Connect to `ws://localhost:3001`, send `{"type":"authenticate","token":"..."}`, receive `{"type":"SWAP_REQUEST","data":{...}}` for real-time notifications.
 
 ---
 
 ## 🧠 Assumptions & Challenges
 
-### Key Assumptions Made During Development
+**Assumptions**: All times in UTC (displayed in user's local timezone). No recurring events—each is atomic. Only 1:1 swaps supported. Multi-group membership but single active group context. Event overlap allowed (user manages conflicts).
 
-**Timezone Handling**: All event times are stored in MongoDB as UTC timestamps. The frontend displays them in the user's browser's local timezone using JavaScript's `Date` object. This assumes users understand times are shown in their local context and doesn't require explicit timezone selection per event.
-
-**Event Granularity**: Each event is a single, non-recurring occurrence. There's no support for recurring events (daily/weekly patterns) or series. If a user has a recurring meeting, they must create separate events for each occurrence. This simplifies the swap logic since each event is atomic.
-
-**Swap Cardinality**: The system only supports 1:1 swaps (one event for one event). Multi-event swaps (e.g., trading two morning slots for one afternoon slot) are not supported. This keeps the swap transaction logic simple and the UI intuitive.
-
-**Group Isolation & Multi-tenancy**: Users can belong to multiple groups but operate in one "current group" at a time (similar to Slack workspaces). All queries filter by `currentGroup`, ensuring complete data isolation between groups. Users must explicitly switch groups to see different event sets. This prevents accidental cross-group data leakage and scales to thousands of isolated communities.
-
-**Event Overlap Allowed**: The system doesn't prevent users from creating overlapping events in their calendar. It's the user's responsibility to manage schedule conflicts. This design choice prioritizes flexibility over strict validation, as users might legitimately need to represent tentative or conflicting commitments.
-
-### Technical Challenges & Solutions
-
-**Challenge 1: WebSocket Authentication Security**
-
-**Problem**: WebSockets don't support HTTP headers like REST APIs, so sending JWT tokens in the initial handshake header isn't straightforward with the basic `ws` library. Simply accepting any connection would be a security hole.
-
-**Solution**: Implemented a two-phase connection: (1) Client establishes WebSocket connection, (2) Client immediately sends an authentication message containing the JWT as JSON payload, (3) Server validates the token, extracts userId, and stores it in a `Map<userId, WebSocketConnection>`, (4) Unauthenticated connections are closed after 5 seconds. This allows secure token validation while maintaining WebSocket simplicity.
-
-**Challenge 2: Atomic Swap Transactions**
-
-**Problem**: Accepting a swap requires three database writes: (1) Update requester's event userId, (2) Update target's event userId, (3) Update swap request status. If any fails midway (network error, server crash), calendars could end up in an inconsistent state (one event swapped but not the other).
-
-**Solution**: Leveraged Mongoose/MongoDB transactions with session management. All three updates are wrapped in a single transaction that either commits entirely or rolls back entirely. This guarantees atomicity—swaps are all-or-nothing, preventing data corruption even during failures.
-
-**Challenge 3: Group State Persistence Bug**
-
-**Problem**: After implementing groups, users reported their groups "disappearing" after logout/login. Investigation revealed the `/api/auth/login` endpoint populated `currentGroup` but not the `groups` array, so the frontend couldn't render the group list.
-
-**Solution**: Added `.populate('groups')` to the login query alongside existing `.populate('currentGroup')`. Additionally, ensured every group operation endpoint (create/join/leave/switch) returns the full updated user object with populated groups, keeping frontend state synchronized with backend state.
-
-**Challenge 4: Dark Mode Flash on Load**
-
-**Problem**: Users experienced a "flash" of the wrong theme when loading the page—the light theme would briefly appear before JavaScript read localStorage and applied dark mode. This created a jarring user experience.
-
-**Solution**: Moved theme logic earlier in the load cycle by reading `localStorage.getItem('theme')` and applying the theme class to `<html>` in `index.html` via inline script before React mounts. Combined with CSS variables (`:root` and `[data-theme="dark"]`), this ensures the correct theme renders immediately, eliminating the flash.
+**Key Challenges Solved**:
+- **WebSocket Auth**: Two-phase connection—client connects then sends JWT in message payload, server validates and maps userId to connection
+- **Atomic Swaps**: Mongoose transactions ensure both events swap ownership or neither (prevents inconsistent state on failures)  
+- **Group Persistence Bug**: Added `.populate('groups')` to login route so groups array persists across sessions
+- **Dark Mode Flash**: Applied theme from localStorage in inline script before React mounts, using CSS variables
 
 ---
 
-**Built with ❤️ using the MERN Stack**
+**Built with ❤️ using the MERN Stack** | [GitHub](https://github.com/Natraj16/SlotSwapper)
 
 - ✅ **Unit Tests** - Comprehensive tests for swap logic
 
