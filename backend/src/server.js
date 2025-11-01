@@ -24,8 +24,10 @@ const server = http.createServer(app);
 // Connect to MongoDB
 connectDatabase();
 
-// Initialize WebSocket server
-initWebSocketServer(server);
+// Initialize WebSocket server (only in development, not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  initWebSocketServer(server);
+}
 
 // Middleware
 app.use(cors({
@@ -41,13 +43,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/groups', groupRoutes);
-app.use('/api', swapRoutes);
-
-// Health check endpoint
+// Health check endpoint (must be before protected routes)
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -55,6 +51,12 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/groups', groupRoutes);
+app.use('/api', swapRoutes);
 
 // 404 handler
 app.use((req, res) => {
