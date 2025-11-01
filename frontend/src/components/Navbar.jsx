@@ -76,7 +76,11 @@ const Navbar = () => {
               )}
             </Link>
 
-            <button onClick={toggleDarkMode} className="theme-toggle" title="Toggle dark mode">
+            <button 
+              onClick={() => { toggleDarkMode(); closeMenu(); }} 
+              className="theme-toggle" 
+              title="Toggle dark mode"
+            >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
 
@@ -101,7 +105,11 @@ const Navbar = () => {
           </div>
         ) : (
           <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
-            <button onClick={toggleDarkMode} className="theme-toggle" title="Toggle dark mode">
+            <button 
+              onClick={() => { toggleDarkMode(); closeMenu(); }} 
+              className="theme-toggle" 
+              title="Toggle dark mode"
+            >
               {isDarkMode ? '☀️' : '🌙'}
             </button>
             <Link to="/login" className="btn btn-sm btn-outline" onClick={closeMenu}>

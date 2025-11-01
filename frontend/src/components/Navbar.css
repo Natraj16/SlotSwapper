@@ -247,6 +247,7 @@
     transition: right 0.3s ease;
     box-shadow: -4px 0 12px var(--shadow);
     overflow-y: auto;
+    z-index: 1000;
   }
 
   .navbar-menu.active {
