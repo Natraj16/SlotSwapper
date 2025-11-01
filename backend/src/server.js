@@ -71,8 +71,9 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-server.listen(PORT, () => {
-  console.log(`
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║                                                       ║
 ║   🔄 SlotSwapper API Server                          ║
@@ -82,8 +83,9 @@ server.listen(PORT, () => {
 ║   📡 WebSocket enabled                                ║
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+}
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
@@ -93,3 +95,6 @@ process.on('SIGTERM', () => {
     process.exit(0);
   });
 });
+
+// Export for Vercel serverless
+export default app;
