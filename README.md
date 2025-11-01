@@ -1,102 +1,376 @@
-# SlotSwapper# 🔄 SlotSwapper - P2P Time Slot Scheduling
+# 🔄 SlotSwapper - P2P Time Slot Scheduling
 
+A peer-to-peer scheduling application that enables users to swap calendar events with each other in real-time.
 
-
-A peer-to-peer time-slot scheduling application that enables users to swap calendar events with each other in real-time.**SlotSwapper** is a peer-to-peer time-slot scheduling application that allows users to exchange busy time slots with each other. Built with a modern tech stack featuring real-time notifications, JWT authentication, and a beautiful UI using the Quicksand font.
-
-
-
-## 📋 Table of Contents![Tech Stack](https://img.shields.io/badge/MongoDB-Atlas-green) ![Node.js](https://img.shields.io/badge/Node.js-Express-blue) ![React](https://img.shields.io/badge/React-Vite-purple) ![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-orange)
-
-
-
-- [Overview](#overview)---
-
-- [Design Choices](#design-choices)
-
-- [Features](#features)## 📋 Table of Contents
-
-- [Tech Stack](#tech-stack)
-
-- [Setup Instructions](#setup-instructions)- [Problem Statement](#problem-statement)
-
-- [API Documentation](#api-documentation)- [Features](#features)
-
-- [Project Structure](#project-structure)- [Tech Stack](#tech-stack)
-
-- [Assumptions & Challenges](#assumptions--challenges)- [Architecture](#architecture)
-
-- [Database Schema](#database-schema)
-
----- [API Endpoints](#api-endpoints)
-
-- [Getting Started](#getting-started)
-
-## 🎯 Overview- [Usage Guide](#usage-guide)
-
-- [Project Structure](#project-structure)
-
-SlotSwapper allows users to manage their calendar events and exchange time slots with other users through a simple swap mechanism. Users can mark their busy slots as "swappable," browse available slots from others, and send swap requests. When a swap is accepted, the ownership of both time slots is exchanged automatically.- [How It Works](#how-it-works)
-
-- [Testing](#testing)
-
-### Core Concept
+![Tech Stack](https://img.shields.io/badge/MongoDB-Atlas-green) ![Node.js](https://img.shields.io/badge/Node.js-Express-blue) ![React](https://img.shields.io/badge/React-Vite-purple) ![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-orange)
 
 ---
 
-1. **User A** has a "Team Meeting" on Tuesday 10:00-11:00 AM → marks it as "swappable"
+## 📋 Table of Contents
 
-2. **User B** has a "Focus Block" on Wednesday 2:00-3:00 PM → marks it as "swappable"## 🎯 Problem Statement
+- [Project Overview](#-project-overview)
+- [Design Choices](#-design-choices)
+- [Setup Instructions](#-setup-instructions)
+- [API Endpoints](#-api-endpoints)
+- [Assumptions & Challenges](#-assumptions--challenges)
 
-3. **User A** sees User B's slot and requests a swap
+---
 
-4. **User B** receives a notification and can Accept or RejectUsers often have busy calendar slots that they wish they could swap with others. SlotSwapper solves this by creating a marketplace where:
+## 🎯 Project Overview
 
-5. **If accepted**: User A now owns Wednesday's slot, User B owns Tuesday's slot
+SlotSwapper allows users to manage their calendar events and exchange time slots through a marketplace-based swap mechanism.
 
-1. **User A** has a "Team Meeting" on Tuesday 10:00-11:00 AM (marked as swappable)
+### How It Works
 
----2. **User B** has a "Focus Block" on Wednesday 2:00-3:00 PM (also swappable)
+1. **User A** marks their "Team Meeting" (Tue 10-11 AM) as swappable
+2. **User B** marks their "Focus Block" (Wed 2-3 PM) as swappable
+3. **User A** discovers User B's slot in the marketplace and requests a swap
+4. **User B** receives a real-time notification and can accept/reject
+5. **If accepted**, both events swap ownership automatically
 
-3. **User A** discovers User B's slot and requests a swap
+### Key Features
 
-## 🎨 Design Choices4. **User B** receives a real-time notification and can Accept or Reject
+- ✅ JWT-based authentication
+- ✅ Event CRUD operations with status management (BUSY, SWAPPABLE, SWAP_PENDING)
+- ✅ Real-time WebSocket notifications
+- ✅ Group-based isolation (multi-tenant architecture with invite codes)
+- ✅ Dark/Light mode toggle
+- ✅ Responsive mobile-first design
 
-5. **If accepted**, both calendars are automatically updated with swapped ownership
+---
+
+## 🎨 Design Choices
 
 ### Architecture
+- **Monorepo Structure**: Backend and frontend in separate directories for clear separation
+- **RESTful API**: Standard REST endpoints for predictable interactions
+- **Real-time Communication**: WebSocket server for instant notifications (no polling)
+
+### Tech Stack
+| Layer | Technology | Why? |
+|-------|-----------|------|
+| **Frontend** | React 18 + Vite | Fast development, modern React features |
+| **Styling** | Pure CSS | No dependencies, full control, better performance |
+| **Backend** | Node.js + Express | JavaScript full-stack, large ecosystem |
+| **Database** | MongoDB Atlas | Flexible schema, excellent JS integration |
+| **Auth** | JWT | Stateless, scalable, simple to implement |
+| **Real-time** | WebSocket (ws) | Low latency, bidirectional communication |
+
+### Database Design
+**Collections**:
+- `users`: User accounts with bcrypt-hashed passwords, group memberships
+- `events`: Calendar events with status tracking and owner references
+- `swaprequests`: Swap negotiations linking two events and users
+- `groups`: Multi-tenant groups with unique 6-character invite codes
+
+**Key Indexes**: `userId`, `status`, `currentGroup` for optimized queries
+
+### Security Decisions
+- ✅ Passwords hashed with bcrypt (salt rounds: 10)
+- ✅ JWT tokens with 30-day expiration
+- ✅ CORS configured for specific frontend origin
+- ✅ Group-based data isolation (users only see events in their current group)
+- ✅ Protected API routes with JWT middleware
 
 ---
 
-- **Monorepo Structure**: Backend and frontend in separate directories for clear separation of concerns
+## 🚀 Setup Instructions
 
-- **RESTful API**: Standard REST endpoints for predictable and easy-to-understand API design## ✨ Features
+### Prerequisites
+- Node.js 16+ and npm
+- MongoDB Atlas account (or local MongoDB)
+- Git
 
-- **JWT Authentication**: Stateless authentication for scalability and simplicity
+### 1. Clone Repository
+```bash
+git clone https://github.com/Natraj16/SlotSwapper.git
+cd SlotSwapper
+```
 
-- **Real-time Updates**: WebSocket integration for instant notifications without polling### Core Features
+### 2. Backend Setup
+```bash
+cd backend
+npm install
+```
 
-- ✅ **User Authentication** - Sign up and login with JWT token-based authentication
+Create `backend/.env`:
+```env
+PORT=3001
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/slotswapper
+JWT_SECRET=your-secret-key-minimum-32-characters
+FRONTEND_URL=http://localhost:5173
+NODE_ENV=development
+```
 
-### Database Design- ✅ **Calendar Management** - CRUD operations for events/time slots
+Start backend:
+```bash
+npm run dev
+```
+Backend runs on: `http://localhost:3001`
 
-- ✅ **Swap Marketplace** - Browse swappable slots from other users
+### 3. Frontend Setup
+Open a new terminal:
+```bash
+cd frontend
+npm install
+```
 
-- **MongoDB with Mongoose**: Chosen for flexible schema and excellent JavaScript integration- ✅ **Swap Requests** - Request to swap your slot with another user's slot
+Create `frontend/.env`:
+```env
+VITE_API_URL=http://localhost:3001/api
+```
 
-- **Three Collections**:- ✅ **Accept/Reject Swaps** - Respond to incoming swap requests
+Start frontend:
+```bash
+npm run dev
+```
+Frontend runs on: `http://localhost:5173`
 
-  - `users`: User accounts with hashed passwords- ✅ **Real-time Notifications** - WebSocket-powered instant notifications
+### 4. Access Application
+Open browser: `http://localhost:5173`
 
-  - `events`: Calendar events/time slots with status tracking- ✅ **Status Management** - Event states: BUSY, SWAPPABLE, SWAP_PENDING
+**Test Account** (or create your own):
+- Email: `test@example.com`
+- Password: `password123`
 
-  - `swaprequests`: Swap negotiations between users- ✅ **Protected Routes** - Frontend route protection for authenticated users
+---
 
-- **Indexed Fields**: Strategic indexes on `userId`, `status`, and compound indexes for query optimization- ✅ **Responsive Design** - Mobile-friendly UI with modern aesthetics
+## 📡 API Endpoints
 
+### Authentication
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Register new user | No |
+| POST | `/api/auth/login` | Login user | No |
+| GET | `/api/auth/me` | Get current user | Yes |
 
+**Example Request** (Register):
+```json
+POST /api/auth/register
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securepassword"
+}
+```
 
-### Security### Bonus Features Implemented
+**Example Response**:
+```json
+{
+  "user": {
+    "id": "abc123",
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Events
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/events` | Get user's events | Yes |
+| GET | `/api/events/swappable` | Get swappable events (marketplace) | Yes |
+| POST | `/api/events` | Create new event | Yes |
+| PUT | `/api/events/:id` | Update event | Yes |
+| DELETE | `/api/events/:id` | Delete event | Yes |
+
+**Example Request** (Create Event):
+```json
+POST /api/events
+Authorization: Bearer <token>
+{
+  "title": "Team Meeting",
+  "startTime": "2025-11-05T10:00:00Z",
+  "endTime": "2025-11-05T11:00:00Z",
+  "status": "SWAPPABLE"
+}
+```
+
+### Swap Requests
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/swap-requests` | Get user's swap requests | Yes |
+| POST | `/api/swap-requests` | Create swap request | Yes |
+| PUT | `/api/swap-requests/:id/accept` | Accept swap | Yes |
+| PUT | `/api/swap-requests/:id/reject` | Reject swap | Yes |
+
+**Example Request** (Request Swap):
+```json
+POST /api/swap-requests
+Authorization: Bearer <token>
+{
+  "userEventId": "event123",
+  "targetEventId": "event456"
+}
+```
+
+### Groups
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/groups/create` | Create new group | Yes |
+| POST | `/api/groups/join` | Join group with code | Yes |
+| POST | `/api/groups/switch` | Switch current group | Yes |
+| POST | `/api/groups/leave` | Leave a group | Yes |
+| GET | `/api/groups` | List user's groups | Yes |
+
+**Example Request** (Create Group):
+```json
+POST /api/groups/create
+Authorization: Bearer <token>
+{
+  "name": "Engineering Team"
+}
+```
+
+**Example Response**:
+```json
+{
+  "group": {
+    "id": "grp123",
+    "name": "Engineering Team",
+    "inviteCode": "A1B2C3"
+  },
+  "message": "Group created successfully"
+}
+```
+
+### WebSocket Events
+Connect to: `ws://localhost:3001`
+
+**Client → Server**:
+```json
+{
+  "type": "authenticate",
+  "token": "your-jwt-token"
+}
+```
+
+**Server → Client**:
+```json
+{
+  "type": "SWAP_REQUEST",
+  "data": {
+    "message": "John Doe wants to swap with your event",
+    "swapRequest": { /* swap details */ }
+  }
+}
+```
+
+---
+
+## 🧠 Assumptions & Challenges
+
+### Assumptions Made
+
+1. **Single Timezone**: All times stored in UTC, displayed in user's local timezone
+2. **No Recurring Events**: Each event is a single occurrence
+3. **1:1 Swaps Only**: Users can only swap one event for another (not multiple events)
+4. **Group Isolation**: Users must be in the same group to swap events
+5. **Email Uniqueness**: One email = one account (no social login)
+6. **Event Overlap**: System allows overlapping events (user's responsibility to manage)
+
+### Challenges Faced
+
+#### 1. **WebSocket Authentication**
+- **Problem**: How to authenticate WebSocket connections securely?
+- **Solution**: Implemented token-based authentication where clients send JWT after connection, server validates and associates connection with user ID
+
+#### 2. **Real-time State Sync**
+- **Problem**: Frontend state becoming stale after swaps
+- **Solution**: Combined WebSocket notifications with optimistic UI updates and state refetching
+
+#### 3. **Group Persistence**
+- **Problem**: User's groups disappearing after logout/login
+- **Solution**: Added `.populate('groups')` to login route and ensured all group operations return updated user object
+
+#### 4. **Swap Transaction Logic**
+- **Problem**: Ensuring atomic swaps (both events update or neither)
+- **Solution**: Used Mongoose transactions to guarantee data consistency during ownership transfer
+
+#### 5. **CORS with Credentials**
+- **Problem**: JWT tokens not being sent with cross-origin requests
+- **Solution**: Configured CORS with `credentials: true` and proper origin whitelisting
+
+#### 6. **Mobile Responsiveness**
+- **Problem**: Desktop-first design breaking on mobile
+- **Solution**: Implemented mobile-first CSS with hamburger menu at 968px breakpoint
+
+#### 7. **Dark Mode Flicker**
+- **Problem**: Theme flashing on page load
+- **Solution**: Read theme from localStorage and apply before React hydration using CSS variables
+
+---
+
+## 📂 Project Structure
+
+```
+SlotSwapper/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── database.js          # MongoDB connection
+│   │   ├── middleware/
+│   │   │   └── auth.js              # JWT authentication
+│   │   ├── models/
+│   │   │   ├── User.js              # User schema
+│   │   │   ├── Event.js             # Event schema
+│   │   │   ├── SwapRequest.js       # Swap schema
+│   │   │   └── Group.js             # Group schema
+│   │   ├── routes/
+│   │   │   ├── auth.js              # Auth endpoints
+│   │   │   ├── events.js            # Event endpoints
+│   │   │   ├── swap.js              # Swap endpoints
+│   │   │   └── groups.js            # Group endpoints
+│   │   ├── websocket/
+│   │   │   └── websocketServer.js   # WebSocket server
+│   │   └── server.js                # Express app
+│   ├── package.json
+│   └── .env
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx           # Navigation
+│   │   │   ├── EventForm.jsx        # Create/Edit events
+│   │   │   ├── EventCard.jsx        # Event display
+│   │   │   ├── SwapRequestCard.jsx  # Swap display
+│   │   │   └── GroupManagement.jsx  # Group UI
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx      # Auth state
+│   │   ├── pages/
+│   │   │   ├── Login.jsx            # Login page
+│   │   │   ├── Register.jsx         # Signup page
+│   │   │   ├── Dashboard.jsx        # User's events
+│   │   │   └── Marketplace.jsx      # Browse swaps
+│   │   ├── App.jsx                  # Router setup
+│   │   ├── main.jsx                 # Entry point
+│   │   └── index.css                # Global styles
+│   ├── package.json
+│   └── .env
+│
+└── README.md
+```
+
+---
+
+## 🚀 Deployment
+
+**Live URLs**:
+- Frontend: Deployed on Vercel
+- Backend: Deployed on Render (`https://slotswapper-backend-i8i7.onrender.com`)
+
+**Note**: WebSocket support requires long-running server (Render/Railway), not serverless (Vercel backend).
+
+---
+
+## 📝 License
+
+MIT License - Feel free to use this project for learning purposes.
+
+---
+
+**Built with ❤️ using MERN Stack**
 
 - ✅ **Unit Tests** - Comprehensive tests for swap logic
 
