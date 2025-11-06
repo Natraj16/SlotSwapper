@@ -39,6 +39,13 @@ NODE_ENV=development
 ```
 Start: `npm run dev` → Runs on `http://localhost:3001`
 
+**Optional: Migrate Existing Events** (if upgrading from older version)
+```bash
+cd backend
+node src/scripts/migrateEvents.js
+```
+This adds `groupId` to events created before the group isolation update.
+
 **3. Frontend Setup** (new terminal)
 ```bash
 cd frontend

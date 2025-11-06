@@ -35,6 +35,12 @@ const eventSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  groupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group',
+    required: true,
+    index: true,
+  },
 }, {
   timestamps: true, // Adds createdAt and updatedAt fields
 });
@@ -44,6 +50,9 @@ eventSchema.index({ status: 1 });
 
 // Index for efficient querying by user and status combination
 eventSchema.index({ userId: 1, status: 1 });
+
+// Index for efficient querying by group
+eventSchema.index({ groupId: 1, status: 1 });
 
 const Event = mongoose.model('Event', eventSchema);
 

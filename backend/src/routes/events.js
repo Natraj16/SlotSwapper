@@ -8,7 +8,15 @@ router.use(protect);
 
 router.get('/', async (req, res) => {
   try {
-    const events = await Event.find({ userId: req.user._id }).sort({ startTime: 1 });
+    if (!req.user.currentGroup) {
+      return res.json([]);
+    }
+    
+    const events = await Event.find({ 
+      userId: req.user._id,
+      groupId: req.user.currentGroup
+    }).sort({ startTime: 1 });
+    
     res.json(events);
   } catch (error) {
     console.error('Get events error:', error);
@@ -24,12 +32,17 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
 
+    if (!req.user.currentGroup) {
+      return res.status(400).json({ message: 'Please join or create a group first' });
+    }
+
     const event = await Event.create({
       title,
       startTime: new Date(startTime),
       endTime: new Date(endTime),
       status,
       userId: req.user._id,
+      groupId: req.user.currentGroup,
     });
 
     res.status(201).json({
@@ -44,7 +57,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const event = await Event.findOne({ _id: req.params.id, userId: req.user._id });
+    const event = await Event.findOne({ 
+      _id: req.params.id, 
+      userId: req.user._id,
+      groupId: req.user.currentGroup
+    });
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
@@ -78,7 +95,11 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const event = await Event.findOne({ _id: req.params.id, userId: req.user._id });
+    const event = await Event.findOne({ 
+      _id: req.params.id, 
+      userId: req.user._id,
+      groupId: req.user.currentGroup
+    });
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });

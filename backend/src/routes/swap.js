@@ -16,19 +16,11 @@ router.get('/swappable-slots', async (req, res) => {
         message: 'Please create or join a group first to see swappable slots' 
       });
     }
-
-    const currentGroup = req.user.currentGroup;
-    
-    const groupUsers = await User.find({
-      currentGroup: currentGroup,
-      _id: { $ne: req.user._id },
-    }).select('_id');
-    
-    const groupUserIds = groupUsers.map(u => u._id);
     
     const swappableSlots = await Event.find({
       status: 'SWAPPABLE',
-      userId: { $in: groupUserIds },
+      groupId: req.user.currentGroup,
+      userId: { $ne: req.user._id },
     })
       .populate('userId', 'name email')
       .sort({ startTime: 1 });
@@ -70,6 +62,22 @@ router.post('/swap-request', async (req, res) => {
 
     if (theirSlot.userId.toString() === req.user._id.toString()) {
       return res.status(400).json({ message: 'Cannot swap with yourself' });
+    }
+
+    // Validate both events are in the same group
+    if (!mySlot.groupId || !theirSlot.groupId || 
+        mySlot.groupId.toString() !== theirSlot.groupId.toString()) {
+      return res.status(403).json({ 
+        message: 'Cannot swap slots from different groups' 
+      });
+    }
+
+    // Validate user is in the same group
+    if (!req.user.currentGroup || 
+        mySlot.groupId.toString() !== req.user.currentGroup.toString()) {
+      return res.status(403).json({ 
+        message: 'Cannot swap slots from a group you are not in' 
+      });
     }
 
     const otherUser = await User.findById(theirSlot.userId);
